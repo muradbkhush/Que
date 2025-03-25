@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التحدي الاقتصادي المتقدم</title>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            width: 80%;
+            max-width: 800px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header {
+            background: #e0f7fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+        }
+
+        .timer {
+            width: 100%;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .timer-bar {
+            height: 100%;
+            background: #4fc3f7;
+            width: 100%;
+        }
+
+        .question-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .options button {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .true-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .false-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .hint-section {
+            background: #ffe0b2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .share-buttons button {
+            background: #64b5f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        .signature {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>التحدي الاقتصادي - المستوى <span id="level">1</span></h1>
+            <div class="score-board">
+                <div>النجوم: <span id="stars">☆☆☆☆☆</span></div>
+                <div>التلميحات المتبقية: <span id="hintsLeft">2</span></div>
+            </div>
+            <div class="timer">
+                <div class="timer-bar" style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <div id="questionContainer"></div>
+        <div class="hint-section" id="hintSection">
+            <h3>تلميح:</h3>
+            <p id="hintContent"></p>
+        </div>
+
+        <div class="share-buttons">
+            <button onclick="shareResults()">مشاركة النتيجة</button>
+            <button onclick="showHint()" id="hintBtn">استخدم تلميح ( -5 نقاط)</button>
+            <button onclick="resetGame()">إعادة اللعب</button>
+        </div>
+
+        <div class="footer">
+            <p>تم التطوير بواسطة <span class="signature">Acc@murad</span></p>
+        </div>
+    </div>
+
+    <script>
+        const allQuestions = [
+            {text: 'الاقتصاد الموضوعي يعتمد على القيم الأخلاقية في تحليله.', answer: false, hint: 'مؤشر أسعار المستهلك يُستخدم لقياس التضخم وهو مثال على التحليل الموضوعي.'},
+{text: 'دراسة تأثير ارتفاع الضرائب على البطالة تنتمي إلى الاقتصاد المعياري.', answer: false, hint: 'الاقتصاد المعياري يقدم توصيات مثل: "يجب خفض الضرائب على الفقراء".'},
+{text: 'توازن المستهلك يتحقق عندما ينفق كل دخله دون مراعاة الرضا.', answer: false, hint: 'نظرية المنفعة الحدية تفسر اختيارات المستهلك في التوازن.'},
+{text: 'الميل (Slope) في العلاقة العكسية يكون دائمًا قيمته موجبة.', answer: false, hint: 'في منحنى الطلب، يرتبط السعر والكمية بعلاقة عكسية بميل سالب.'},
+{text: 'الرسوم البيانية في الاقتصاد تُظهر فقط العلاقات الخطية بين المتغيرات.', answer: false, hint: 'منحنى لافر يوضح العلاقة غير الخطية بين الضرائب والإيرادات الحكومية.'},
+{text: 'تحليل التوازن الجزئي يدرس تفاعل جميع القطاعات الاقتصادية معًا.', answer: false, hint: 'دراسة سوق الذهب بمعزل عن أسواق العملات مثال على التوازن الجزئي.'},
+{text: 'إذا كانت المعادلة الرياضية \( Y = 5X + 3 \) فإن العلاقة طردية.', answer: true, hint: 'الاستثمار في البنية التحتية وزيادة النمو الاقتصادي علاقة طردية.'},
+{text: 'الاقتصاد المعياري يُستخدم لتحديد أفضل سياسات توزيع الدخل.', answer: true, hint: 'النقاش حول الحد الأدنى للأجاء ينتمي إلى الاقتصاد المعياري.'},
+{text: 'التوازن العام يهمل تأثير التغير في سوق ما على الأسواق الأخرى.', answer: false, hint: 'أزمة 2008 المالية أظهرت ترابط أسواق الإسكان والبنوك عالميًا.'},
+{text: 'العلاقة بين الدخل والادخار تكون دائمًا خطية.', answer: false, hint: 'نظرية كينز تشرح كيف قد ينخفض الميل الحدي للادخار مع زيادة الدخل.'},
+            // يمكن إضافة المزيد من الأسئلة هنا
+        ];
+
+        let currentQuestionIndex = 0;
+        let stars = 0;
+        let hintsLeft = 2;
+        let timeLeft = 60;
+        let timerId;
+        let questions = [];
+
+        function getRandomQuestions() {
+            return [...allQuestions].sort(() => Math.random() - 0.5);
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            document.getElementById('questionContainer').innerHTML = `
+                <div class="question-card">
+                    <h2>${question.text}</h2>
+                    <div class="options">
+                        <button class="true-btn" onclick="checkAnswer(true)">صح ✅</button>
+                        <button class="false-btn" onclick="checkAnswer(false)">خطأ ❌</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('level').textContent = currentQuestionIndex + 1;
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerId);
+            timeLeft = 60;
+            const timerBar = document.querySelector('.timer-bar');
+            
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerBar.style.width = `${(timeLeft / 60) * 100}%`;
+                
+                if(timeLeft <= 0) {
+                    clearInterval(timerId);
+                    checkAnswer(false);
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(userAnswer) {
+            clearInterval(timerId);
+            const correct = questions[currentQuestionIndex].answer === userAnswer;
+            
+            if(correct) {
+                stars++;
+                alert('إجابة صحيحة! +1 نجمة');
+            } else {
+                alert('إجابة خاطئة!');
+            }
+            
+            updateStars();
+            nextQuestion();
+        }
+
+        function updateStars() {
+            stars = Math.max(0, Math.min(stars, 10));
+            const starsText = '★'.repeat(stars) + '☆'.repeat(10 - stars);
+            document.getElementById('stars').textContent = starsText;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if(currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+            showQuestion();
+        }
+
+        function showHint() {
+            if(hintsLeft > 0) {
+                document.getElementById('hintSection').style.display = 'block';
+                document.getElementById('hintContent').textContent = questions[currentQuestionIndex].hint;
+                hintsLeft--;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            hintsLeft = Math.max(0, hintsLeft);
+            document.getElementById('hintsLeft').textContent = hintsLeft;
+        }
+
+        function shareResults() {
+            const shareText = `حصلت على ${stars} من 10 نجوم في التحدي الاقتصادي!`;
+            const resultImage = 'https://example.com/your-result-image.png';
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + resultImage)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function endGame() {
+            alert(`انتهت اللعبة! النتيجة النهائية: ${stars} من 10 نجوم`);
+            document.getElementById('questionContainer').innerHTML = '<h2>انتهت الأسئلة!</h2>';
+        }
+
+        function resetGame() {
+            currentQuestionIndex = 0;
+            stars = 0;
+            hintsLeft = 2;
+            questions = getRandomQuestions();
+            updateStars();
+            updateUI();
+            showQuestion();
+        }
+
+        // تهيئة اللعبة الأولى
+        questions = getRandomQuestions();
+        showQuestion();
+        updateStars();
+        updateUI();
+    </script>
+</body>
+</html>
